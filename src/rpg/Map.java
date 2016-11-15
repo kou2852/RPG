@@ -1,0 +1,168 @@
+package rpg;
+
+import java.awt.Graphics;
+import java.awt.Image;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+
+import javax.swing.ImageIcon;
+
+public class Map implements Common{
+    
+    //マップの行数・列数（単位：マス）
+    private int row;
+    private int col;
+    
+    
+    //マップ全体の大きさ(単位：ピクセル)
+    private int width;
+    private int height;
+    
+    //マップ
+    private int[][] map;
+    
+    //チップセット
+    private Image floorImage;
+    private Image wallImage;
+    private Image throneImage;
+    
+    //メインパネルへの参照
+    private MainPanel panel;
+    
+    public Map(String filename, MainPanel panel){
+    	//マップのロード
+    	load(filename);
+        //イメージをロード
+        loadImage();
+    }
+    
+    public void draw(Graphics g, int offsetX, int offsetY){
+        //オフセットを基に描画範囲を求める
+        int firstTileX = pixelsToTiles( -offsetX);
+        int lastTileX = firstTileX + pixelsToTiles(MainPanel.WIDTH) + 1;
+        //描画範囲がマップの大きさより大きくならないように調整
+        lastTileX = Math.min(lastTileX, col);
+        
+        int firstTileY = pixelsToTiles( -offsetY);
+        int lastTileY = firstTileY + pixelsToTiles(MainPanel.HEIGHT) + 1;
+        //描画範囲がマップの大きさより大きくならないように調整
+        lastTileY = Math.min(lastTileY, row);
+        
+        for(int i = firstTileY; i < lastTileY; i++){
+            for(int j = firstTileX; j < lastTileX; j++){
+                //mapの値に応じて画像を書く
+                switch(map[i][j]){
+                    case 0 ://床
+                        g.drawImage(floorImage, tilesToPixels(j) + offsetX, tilesToPixels(i) + offsetY, panel);
+                        break;
+                    case 1 : //壁
+                        g.drawImage(wallImage, tilesToPixels(j) + offsetX, tilesToPixels(i) + offsetY, panel);
+                        break;
+                    case 2://玉座 
+                    	g.drawImage(throneImage, tilesToPixels(j) + offsetX, tilesToPixels(i) + offsetY, panel);
+                    	break;
+                }
+            }
+        }
+    }
+    
+    /**
+     * (x,y)にぶつかるものがあるか調べる。
+     * @param x マップのx座標
+     * @param y マップの座y標
+     * @return (x, y)にぶつかるものがあったらfalseを返す。
+     */
+    public boolean isHit(int x, int y){
+        //(x, y)に壁か玉座があったらぶつかる
+        if(map[y][x] == 1 || map[y][x] == 2 ){
+            return true;
+        }
+        //なければぶつからない
+        return false;
+    }
+    
+    /**
+     * ピクセル単位をマス単位に変更する
+     * @param pixels ピクセル単位
+     * @return マス単位
+    */
+    public static int pixelsToTiles(double pixels){
+        return (int)Math.floor(pixels / CS);
+    }
+    
+    /**
+     * マス単位をピクセル単位に変更する
+     * @param tiles マス単位
+     * @return ピクセル単位
+    */
+    public static int tilesToPixels(int tiles){
+        return tiles * CS;
+    }
+    
+    public void loadImage(){
+        ImageIcon icon = new ImageIcon(getClass().getResource("floor.gif"));
+        floorImage = icon.getImage();
+        
+        icon  = new ImageIcon(getClass().getResource("wall.gif"));
+        wallImage = icon.getImage();
+        
+        icon = new ImageIcon(getClass().getResource("throne.gif"));
+        throneImage = icon.getImage();
+    }
+    
+    public int getRow(){
+    	return row;
+    }
+    
+    public int getCol(){
+    	return col;
+    }
+    
+    public int getWidth(){
+    	return width;
+    }
+    
+    public int getHeight(){
+    	return height;
+    }
+    
+    /**
+     * ファイルからマップデータを読み込む
+     * @param filename  読み込みマップデータのファイル名
+     */
+    private void load(String filename){
+    	try{
+    		BufferedReader br = new BufferedReader(
+    				new InputStreamReader(
+    						getClass().getResourceAsStream(filename)));
+    		//rowを読み込む
+    		String line = br.readLine();
+    		row = Integer.parseInt(line);
+    		//colを読み込む
+    		line = br.readLine();
+    		col = Integer.parseInt(line);
+    		//マップサイズを設定
+    		width = col * CS;
+    		height = row * CS;
+    		//マップを作成
+    		map = new int[row][col];
+    		for(int i = 0; i < row; i++){
+    			line = br.readLine();
+    			for(int j = 0; j < col; j++){
+    				map[i][j] = Integer.parseInt(line.charAt(j) + "");	
+    			}
+    		}
+//    			show()
+    	}catch (Exception e){
+    		e.printStackTrace();
+    	}
+    }
+    public void show(){
+    	for(int i = 0; i < col; i++){
+    		for(int j = 0; j < row; j++){
+    			System.out.println(map[i][j]);
+    		}
+    		System.out.println();
+    	}
+    }
+}
